@@ -19,14 +19,7 @@ let
     };
 
     nativeBuildInputs = [
-      makeBinaryWrapper
       rpmextract
-    ];
-
-    buildInputs = [
-      stdenv.cc.cc.lib
-      libaio
-      alsa-lib
     ];
 
     unpackCmd = ''
@@ -57,6 +50,9 @@ let
     targetPkgs = pkgs: [
       oracle-database-base
       libaio
+      stdenv.cc.cc.lib
+      libaio
+      alsa-lib
     ];
   };
 in
@@ -65,6 +61,7 @@ stdenv.mkDerivation (finalAttrs: {
   version = "23c";
 
   dontUnpack = true;
+  dontConfigure = true;
   dontBuild = true;
 
   buildInputs = [
@@ -75,6 +72,7 @@ stdenv.mkDerivation (finalAttrs: {
     runHook preInstall
 
     mkdir -p $out/bin
+    # TODO: This do not work, but this is precisely what I'm looking for
     ln -s ${oracle-database-fhs}/bin/sqlplus $out/bin/sqlplus
 
     runHook postInstall
