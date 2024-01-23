@@ -6,6 +6,7 @@
 , rpmextract
 , libaio
 , alsa-lib
+, runtimeShell
 }:
 let
   oracle-database-base = stdenv.mkDerivation (finalAttrs: {
@@ -40,7 +41,7 @@ let
       runHook postInstall
     '';
 
-    outputs = [ "bin" "out" "dev" "lib" ];
+    outputs = [ "out" "bin" "dev" "lib" ];
   });
 in
 buildFHSEnv {
@@ -275,9 +276,9 @@ buildFHSEnv {
       for executable in $EXECUTABLES; do
         mkdir -p $out/$(dirname $executable)
 
-        echo "#!${stdenv.shell}" >> $out/$executable
+        echo "#!${runtimeShell}" >> $out/$executable
         echo "export ORACLE_HOME=${oracle-database-base.out}/opt/oracle/product/23c/dbhomeFree" >> $out/$executable
-        echo "$WRAPPER ${oracle-database-base}/$executable \"\$@\"" >> $out/$executable
+        echo "$WRAPPER ${oracle-database-base.bin}/$executable \"\$@\"" >> $out/$executable
       done
 
       cd $out
