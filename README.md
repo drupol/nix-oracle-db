@@ -9,12 +9,13 @@ external contributions.
 
 ## Usage
 
-The only exposed package of this flake is `oracledb`, there's also a `default`
+The only exposed package of this flake is `oracle-database`, there's also a `default`
 overlay.
 
 ## Status
 
-Not working yet, see Discourse issue @ https://discourse.nixos.org/t/packaging-oracle-database-23c/38697
+Basic binaries are working! I don't like the current implementation, I hope I
+will find a better solution in the upcoming days.
 
 ## Useful links
 

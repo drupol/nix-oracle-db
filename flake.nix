@@ -1,5 +1,5 @@
 {
-  description = "Oracle database";
+  description = "Oracle Database";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -24,7 +24,7 @@
 
       formatter = pkgs.nixpkgs-fmt;
 
-      packages.oracledb = pkgs.callPackage ./packages/oracledb.nix { };
+      packages.oracle-database = pkgs.callPackage ./packages/oracle-database.nix { };
     };
   };
 }
