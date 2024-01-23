@@ -45,17 +45,16 @@ let
   });
 in
 buildFHSEnv {
-  name = "oracle-database-fhs";
+  name = "oracle-database";
 
   targetPkgs = pkgs: [
     oracle-database-base
     libaio
-    stdenv.cc.cc.lib
-    libaio
     alsa-lib
   ];
 
-  runScript = writeScript "oracle-database-fhs-wrapper" ''
+  runScript = writeScript "oracle-database-wrapper" ''
+    export ORACLE_HOME=${oracle-database-base.out}/opt/oracle/product/23c/dbhomeFree
     exec "$@"
   '';
 
@@ -271,13 +270,12 @@ buildFHSEnv {
       ];
     in
     ''
-      WRAPPER=$out/bin/oracle-database-fhs
+      WRAPPER=$out/bin/oracle-database
       EXECUTABLES="${lib.concatStringsSep " " executables}"
       for executable in $EXECUTABLES; do
         mkdir -p $out/$(dirname $executable)
 
         echo "#!${runtimeShell}" >> $out/$executable
-        echo "export ORACLE_HOME=${oracle-database-base.out}/opt/oracle/product/23c/dbhomeFree" >> $out/$executable
         echo "$WRAPPER ${oracle-database-base.bin}/$executable \"\$@\"" >> $out/$executable
       done
 
