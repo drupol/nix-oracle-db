@@ -276,6 +276,7 @@ buildFHSEnv {
         mkdir -p $out/$(dirname $executable)
 
         echo "#!${stdenv.shell}" >> $out/$executable
+        echo "export ORACLE_HOME=${oracle-database-base.out}/opt/oracle/product/23c/dbhomeFree" >> $out/$executable
         echo "$WRAPPER ${oracle-database-base}/$executable \"\$@\"" >> $out/$executable
       done
 
