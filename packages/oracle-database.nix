@@ -1,15 +1,15 @@
 { lib
-, stdenv
+, stdenvNoCC
 , fetchurl
 , buildFHSEnv
 , writeScript
 , rpmextract
 , libaio
 , alsa-lib
-, runtimeShell
+, symlinkJoin
 }:
 let
-  oracle-database-base = stdenv.mkDerivation (finalAttrs: {
+  oracle-database-base = stdenvNoCC.mkDerivation (finalAttrs: {
     pname = "oracle-database-base";
     version = "23c";
 
@@ -43,23 +43,20 @@ let
 
     outputs = [ "out" "bin" "dev" "lib" ];
   });
+
+  fhsEnv = {
+    targetPkgs = pkgs: [
+      oracle-database-base
+      libaio
+      libaio
+      alsa-lib
+    ];
+  };
 in
-buildFHSEnv {
-  name = "oracle-database-fhs";
+symlinkJoin {
+  name = "oracle-database";
 
-  targetPkgs = pkgs: [
-    oracle-database-base
-    libaio
-    stdenv.cc.cc.lib
-    libaio
-    alsa-lib
-  ];
-
-  runScript = writeScript "oracle-database-fhs-wrapper" ''
-    exec "$@"
-  '';
-
-  extraInstallCommands =
+  paths =
     let
       executables = [
         "bin/acfsroot"
@@ -269,19 +266,10 @@ buildFHSEnv {
         "bin/xsql"
         "bin/xvm"
       ];
-    in
-    ''
-      WRAPPER=$out/bin/oracle-database-fhs
-      EXECUTABLES="${lib.concatStringsSep " " executables}"
-      for executable in $EXECUTABLES; do
-        mkdir -p $out/$(dirname $executable)
-
-        echo "#!${runtimeShell}" >> $out/$executable
-        echo "export ORACLE_HOME=${oracle-database-base.out}/opt/oracle/product/23c/dbhomeFree" >> $out/$executable
-        echo "$WRAPPER ${oracle-database-base.bin}/$executable \"\$@\"" >> $out/$executable
-      done
-
-      cd $out
-      chmod +x $EXECUTABLES
-    '';
+    in map (exe: (buildFHSEnv (fhsEnv // {
+      name = builtins.baseNameOf exe;
+      runScript = writeScript "oracle-database-fhs-script-${exe}" ''
+        ORACLE_HOME=${oracle-database-base}/opt/oracle/product/23c/dbhomeFree ${oracle-database-base.bin}/${exe} "$@"
+      '';
+      }))) executables;
 }
