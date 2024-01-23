@@ -1,5 +1,5 @@
 { lib
-, stdenv
+, stdenvNoCC
 , fetchurl
 , buildFHSEnv
 , writeScript
@@ -9,7 +9,7 @@
 , runtimeShell
 }:
 let
-  oracle-database-base = stdenv.mkDerivation (finalAttrs: {
+  oracle-database-base = stdenvNoCC.mkDerivation (finalAttrs: {
     pname = "oracle-database-base";
     version = "23c";
 
