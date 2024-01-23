@@ -1,0 +1,30 @@
+{
+  description = "Oracle database";
+
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    systems.url = "github:nix-systems/default";
+  };
+
+  outputs = inputs @ { self, flake-parts, ... }: flake-parts.lib.mkFlake { inherit inputs; } {
+    systems = import inputs.systems;
+
+    imports = [
+      inputs.flake-parts.flakeModules.easyOverlay
+    ];
+
+    perSystem = { config, self', inputs', pkgs, system, lib, ... }: {
+      _module.args.pkgs = import self.inputs.nixpkgs {
+        inherit system;
+        overlays = [ ];
+        config = {
+          allowUnfree = true;
+        };
+      };
+
+      formatter = pkgs.nixpkgs-fmt;
+
+      packages.oracledb = pkgs.callPackage ./packages/oracledb.nix { };
+    };
+  };
+}
