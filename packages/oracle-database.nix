@@ -271,15 +271,17 @@ buildFHSEnv {
     in
     ''
       WRAPPER=$out/bin/oracle-database
-      EXECUTABLES="${lib.concatStringsSep " " executables}"
-      for executable in $EXECUTABLES; do
-        mkdir -p $out/$(dirname $executable)
 
+      for executable in ${lib.concatStringsSep " " executables}; do
+        mkdir -p $out/$(dirname $executable)
         echo "#!${runtimeShell}" >> $out/$executable
         echo "$WRAPPER ${oracle-database-base.bin}/$executable \"\$@\"" >> $out/$executable
+        chmod +x $out/$executable
       done
 
-      cd $out
-      chmod +x $EXECUTABLES
+      mkdir -p $out/etc/init.d
+      echo "#!${runtimeShell}" >> $out/etc/init.d/oracle-free-23c
+      echo "$WRAPPER ${oracle-database-base}/etc/init.d/oracle-free-23c \"\$@\"" >> $out/etc/init.d/oracle-free-23c
+      chmod +x $out/etc/init.d/oracle-free-23c
     '';
 }
