@@ -2,12 +2,15 @@
 , stdenv
 , fetchurl
 
+, autoPatchelfHook
 , makeBinaryWrapper
 , rpmextract
+, libaio
+, alsa-lib
 }:
 
 stdenv.mkDerivation (finalAttrs: {
-  pname = "oracle";
+  pname = "oracle-database";
   version = "23c";
 
   src = fetchurl {
@@ -15,14 +18,23 @@ stdenv.mkDerivation (finalAttrs: {
     hash = "sha256-Exm818twbLcnUBy9mKvz85gKT9q+thOhq//HVpJcc3Q=";
   };
 
+  autoPatchelfIgnoreMissingDeps = true;
+
   nativeBuildInputs = [
+    autoPatchelfHook
     makeBinaryWrapper
     rpmextract
-  ] ++ lib.optionals stdenv.isLinux [
-  ] ++ lib.optionals stdenv.isDarwin [
   ];
 
-  buildInputs = [ ];
+  buildInputs = [
+    stdenv.cc.cc.lib
+    libaio
+    alsa-lib
+  ];
+
+  preBuild = ''
+    addAutoPatchelfSearchPath "${placeholder "out"}/opt/oracle/product/23c/dbhomeFree/lib/"
+  '';
 
   unpackCmd = ''
     mkdir ${finalAttrs.pname}-${finalAttrs.version} && pushd ${finalAttrs.pname}-${finalAttrs.version}
@@ -35,11 +47,19 @@ stdenv.mkDerivation (finalAttrs: {
   installPhase = ''
     runHook preInstall
 
-    mkdir -p $out $out/bin
+    mkdir -p $out $out/bin $lib/lib
     cp -ar {etc,opt,usr} $out
 
     runHook postInstall
   '';
+
+  postInstall = ''
+    for exe in "$out/opt/oracle/product/23c/dbhomeFree/bin/"* ; do
+      test -x "$exe" && makeWrapper $exe "$out/bin/$(basename "$exe")"
+    done
+  '';
+
+  outputs = [ "out" "dev" "lib" ];
 
   meta = {
     description = "Oracle database";
