@@ -7,6 +7,7 @@
 , libaio
 , alsa-lib
 , makeBinaryWrapper
+, openssl
 }:
 let
   oracle-database-unwrapped = stdenvNoCC.mkDerivation (finalAttrs: {
@@ -28,25 +29,33 @@ let
       popd
     '';
 
-    dontPatchShebangs = true;
+    postPatch = ''
+      # Making very subtle changes so that Nix can update the SheBang automatically.
+      substituteInPlace opt/oracle/product/${finalAttrs.version}/dbhomeFree/OPatch/opatch.pl \
+        --replace "#!/usr/bin/env PERL5OPT=-T perl" "#!/usr/bin/env -S PERL5OPT=-T perl"
+      substituteInPlace opt/oracle/product/${finalAttrs.version}/dbhomeFree/OPatch/emdpatch.pl \
+        --replace "#!/usr/bin/env PERL5OPT=-T perl" "#!/usr/bin/env -S PERL5OPT=-T perl"
+      # This script can only be run by root. This changes prevent that. Not sure at all about this yet.
+      substituteInPlace etc/init.d/oracle-free-23c \
+        --replace "/opt/oracle/product/23c/dbhomeFree" ${placeholder "out"}/opt/oracle \
+        --replace 'if [ $(id -u) != "0" ]' 'if false'
+    '';
 
     installPhase = ''
       runHook preInstall
 
-      mkdir -p $out $bin $lib $etc
-      cp -ar opt/oracle/product/${finalAttrs.version}/dbhomeFree/* $out
-      cp -ar etc $etc/
-      mv $out/lib $lib/
-      mv $out/bin $bin/
+      mkdir -p $out/opt/oracle
+      cp -ar {etc,usr} $out/
+      cp -ar opt/oracle/product/${finalAttrs.version}/dbhomeFree/* $out/opt/oracle
+      ln -s $out/opt/oracle/bin $out/bin
+      ln -s $out/opt/oracle/lib $out/lib
 
       # to be confirmed: Remove these files as they are not needed.
-      rm -rf $lib/lib/pkgconfig
-      rm -rf $lib/lib/cmake
+      rm -rf $out/opt/oracle/lib/pkgconfig
+      rm -rf $out/opt/oracle/lib/cmake
 
       runHook postInstall
     '';
-
-    outputs = [ "out" "bin" "lib" "etc" ];
   });
 
   fhs = buildFHSEnv {
@@ -54,8 +63,9 @@ let
 
     targetPkgs = pkgs: [
       oracle-database-unwrapped
-      libaio
       alsa-lib
+      libaio
+      openssl
     ];
 
     runScript = writeScript "oracle-database-fhs-wrapper" ''
@@ -82,20 +92,19 @@ stdenvNoCC.mkDerivation {
 
     mkdir -p $out
 
-    find ${oracle-database-unwrapped.bin}/bin -type f -executable -print0 | while read -d $'\0' executable
+    find ${oracle-database-unwrapped}/opt/oracle/bin -type f -executable -print0 | while read -d $'\0' executable
     do
-      exe=$(cut -d"/" -f5- <<< $executable)
-      makeWrapper ${lib.getExe fhs} $out/bin/$(basename $exe) \
-        --set-default ORACLE_HOME ${oracle-database-unwrapped} \
+      makeWrapper ${lib.getExe fhs} $out/bin/$(basename $executable) \
+        --set-default ORACLE_HOME ${oracle-database-unwrapped}/opt/oracle \
         --add-flags $executable
     done
 
-    find ${oracle-database-unwrapped.etc}/etc/init.d -type f -executable -print0 | while read -d $'\0' executable
+    find ${oracle-database-unwrapped}/etc/init.d -type f -executable -print0 | while read -d $'\0' executable
     do
       exe=$(cut -d"/" -f5- <<< $executable)
       makeWrapper ${lib.getExe fhs} $out/$exe \
-          --set-default ORACLE_HOME ${oracle-database-unwrapped} \
-          --add-flags $executable
+        --set-default ORACLE_HOME ${oracle-database-unwrapped}/opt/oracle \
+        --add-flags $executable
     done
 
     runHook postInstall
