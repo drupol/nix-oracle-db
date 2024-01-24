@@ -28,6 +28,10 @@
 
       packages.oracle-database = pkgs.callPackage ./packages/oracle-database.nix { };
       packages.oracle-database-test = pkgs.testers.runNixOSTest ./tests/integration.nix;
+
+      overlayAttrs = {
+        oracle-database = self'.packages.oracle-database;
+      };
     };
 
     flake = {
