@@ -33,15 +33,20 @@ let
     installPhase = ''
       runHook preInstall
 
-      mkdir -p $out $out/bin $lib/lib $bin/bin
-      cp -ar {etc,opt,usr} $out
-      cp -ar opt/oracle/product/23c/dbhomeFree/lib/* $lib/lib/
-      cp -ar opt/oracle/product/23c/dbhomeFree/bin/* $bin/bin/
+      mkdir -p $out $bin $lib $etc
+      cp -ar opt/oracle/product/${finalAttrs.version}/dbhomeFree/* $out
+      cp -ar etc $etc/
+      mv $out/lib $lib/
+      mv $out/bin $bin/
+
+      # to be confirmed: Remove these files as they are not needed.
+      rm -rf $lib/lib/pkgconfig
+      rm -rf $lib/lib/cmake
 
       runHook postInstall
     '';
 
-    outputs = [ "out" "bin" "dev" "lib" ];
+    outputs = [ "out" "bin" "lib" "etc" ];
   });
 
   fhs = buildFHSEnv {
@@ -81,13 +86,17 @@ stdenvNoCC.mkDerivation {
     do
       exe=$(cut -d"/" -f5- <<< $executable)
       makeWrapper $WRAPPER $out/bin/$(basename $exe) \
-        --set-default ORACLE_HOME ${oracle-database-unwrapped.out}/opt/oracle/product/23c/dbhomeFree \
+        --set-default ORACLE_HOME ${oracle-database-unwrapped} \
         --add-flags $executable
     done
 
-    makeWrapper $WRAPPER $out/etc/init.d/oracle-free-23c \
-        --set-default ORACLE_HOME ${oracle-database-unwrapped.out}/opt/oracle/product/23c/dbhomeFree \
-        --add-flags ${oracle-database-unwrapped}/etc/init.d/oracle-free-23c
+    find ${oracle-database-unwrapped.etc}/etc/init.d -type f -executable -print0 | while read -d $'\0' executable
+    do
+      exe=$(cut -d"/" -f5- <<< $executable)
+      makeWrapper $WRAPPER $out/$exe \
+          --set-default ORACLE_HOME ${oracle-database-unwrapped} \
+          --add-flags $executable
+    done
 
     runHook postInstall
   '';
