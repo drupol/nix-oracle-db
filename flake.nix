@@ -26,5 +26,9 @@
 
       packages.oracle-database = pkgs.callPackage ./packages/oracle-database.nix { };
     };
+
+    flake = {
+      nixosModules.oracle-database = import ./modules/oracle-database.nix;
+    };
   };
 }
