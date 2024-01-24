@@ -61,6 +61,8 @@ let
     runScript = writeScript "oracle-database-fhs-wrapper" ''
       exec "$@"
     '';
+
+    meta.mainProgram = "oracle-database";
   };
 in
 stdenvNoCC.mkDerivation {
@@ -78,14 +80,12 @@ stdenvNoCC.mkDerivation {
   installPhase = ''
     runHook preInstall
 
-    WRAPPER=${fhs}/bin/${fhs.name}
-
     mkdir -p $out
 
     find ${oracle-database-unwrapped.bin}/bin -type f -executable -print0 | while read -d $'\0' executable
     do
       exe=$(cut -d"/" -f5- <<< $executable)
-      makeWrapper $WRAPPER $out/bin/$(basename $exe) \
+      makeWrapper ${lib.getExe fhs} $out/bin/$(basename $exe) \
         --set-default ORACLE_HOME ${oracle-database-unwrapped} \
         --add-flags $executable
     done
@@ -93,7 +93,7 @@ stdenvNoCC.mkDerivation {
     find ${oracle-database-unwrapped.etc}/etc/init.d -type f -executable -print0 | while read -d $'\0' executable
     do
       exe=$(cut -d"/" -f5- <<< $executable)
-      makeWrapper $WRAPPER $out/$exe \
+      makeWrapper ${lib.getExe fhs} $out/$exe \
           --set-default ORACLE_HOME ${oracle-database-unwrapped} \
           --add-flags $executable
     done
