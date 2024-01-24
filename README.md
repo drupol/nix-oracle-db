@@ -10,7 +10,11 @@ external contributions.
 ## Usage
 
 The only exposed package of this flake is `oracle-database`, there's also a `default`
-overlay.
+overlay and a NixOS module (wip).
+
+## Test
+
+Use `nix build .#oracle-database-test -L`
 
 ## Status
 
