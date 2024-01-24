@@ -15,13 +15,21 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    environment.etc."oratab".text = ''
+
+    '';
+
     systemd.services.oracle-database = {
       description = "Oracle Database";
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" ];
 
       serviceConfig = {
-        ExecStart = "";
+        ExecStart = "${cfg.package}/bin/dbstart";
+        StateDirectory = "oracle-database";
+        DynamicUser = true;
+        PrivateTmp = "yes";
+        Restart = "on-failure";
       };
     };
   };
