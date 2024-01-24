@@ -8,6 +8,12 @@
 , alsa-lib
 , makeBinaryWrapper
 , openssl
+, iproute2
+, su
+, gawk
+, gnugrep
+, hostname
+, coreutils
 }:
 let
   oracle-database-unwrapped = stdenvNoCC.mkDerivation (finalAttrs: {
@@ -38,7 +44,17 @@ let
       # This script can only be run by root. This changes prevent that. Not sure at all about this yet.
       substituteInPlace etc/init.d/oracle-free-23c \
         --replace "/opt/oracle/product/23c/dbhomeFree" ${placeholder "out"}/opt/oracle \
-        --replace 'if [ $(id -u) != "0" ]' 'if false'
+        --replace 'if [ $(id -u) != "0" ]' 'if false' \
+        --replace 'SS=/usr/sbin/ss' 'SS=${iproute2}/bin/ss' \
+        --replace 'SS="/sbin/ss"' 'SS="${iproute2}/bin/ss"' \
+        --replace 'SU=/bin/su' 'SU=${su}/bin/su' \
+        --replace 'AWK=/bin/awk' 'AWK=${gawk}/bin/awk' \
+        --replace 'DF=/bin/df' 'DF=${coreutils}/bin/df' \
+        --replace 'GREP=/usr/bin/grep' 'GREP=${gnugrep}/bin/grep' \
+        --replace 'TAIL=/usr/bin/tail' 'TAIL=${coreutils}/bin/tail' \
+        --replace 'TAIL=/bin/tail' 'TAIL=${coreutils}/bin/tail' \
+        --replace 'HOSTNAME_CMD="/bin/hostname"' 'HOSTNAME_CMD="${hostname}/bin/hostname"' \
+        --replace 'MKDIR_CMD="/bin/mkdir"' 'MKDIR_CMD="${coreutils}/bin/mkdir"'
     '';
 
     installPhase = ''
