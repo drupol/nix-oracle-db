@@ -6,11 +6,11 @@
 , rpmextract
 , libaio
 , alsa-lib
-, runtimeShell
+, makeBinaryWrapper
 }:
 let
-  oracle-database-base = stdenvNoCC.mkDerivation (finalAttrs: {
-    pname = "oracle-database-base";
+  oracle-database-unwrapped = stdenvNoCC.mkDerivation (finalAttrs: {
+    pname = "oracle-database-unwrapped";
     version = "23c";
 
     src = fetchurl {
@@ -43,36 +43,61 @@ let
 
     outputs = [ "out" "bin" "dev" "lib" ];
   });
-in
-buildFHSEnv {
-  name = "oracle-database";
 
-  targetPkgs = pkgs: [
-    oracle-database-base
-    libaio
-    alsa-lib
+  fhs = buildFHSEnv {
+    name = "oracle-database";
+
+    targetPkgs = pkgs: [
+      oracle-database-unwrapped
+      libaio
+      alsa-lib
+    ];
+
+    runScript = writeScript "oracle-database-fhs-wrapper" ''
+      exec "$@"
+    '';
+  };
+in
+stdenvNoCC.mkDerivation {
+  pname = "oracle-database";
+  inherit (oracle-database-unwrapped) version;
+
+  dontUnpack = true;
+  dontBuild = true;
+  dontConfigure = true;
+
+  nativeBuildInputs = [
+    makeBinaryWrapper
   ];
 
-  runScript = writeScript "oracle-database-wrapper" ''
-    export ORACLE_HOME=${oracle-database-base.out}/opt/oracle/product/23c/dbhomeFree
-    exec "$@"
-  '';
+  installPhase = ''
+    runHook preInstall
 
-  extraInstallCommands = ''
-    WRAPPER=$out/bin/oracle-database
+    WRAPPER=${fhs}/bin/${fhs.name}
 
-    mkdir -p $out/bin
-    find ${oracle-database-base.bin}/bin -type f -executable -print0 | while read -d $'\0' executable
+    mkdir -p $out
+
+    find ${oracle-database-unwrapped.bin}/bin -type f -executable -print0 | while read -d $'\0' executable
     do
       exe=$(cut -d"/" -f5- <<< $executable)
-      echo "#!${runtimeShell}" >> $out/$exe
-      echo "$WRAPPER ${oracle-database-base.bin}/$exe \"\$@\"" >> $out/bin/$(basename $exe)
-      chmod +x $out/$exe
+      makeWrapper $WRAPPER $out/bin/$(basename $exe) \
+        --set-default ORACLE_HOME ${oracle-database-unwrapped.out}/opt/oracle/product/23c/dbhomeFree \
+        --add-flags $executable
     done
 
-    mkdir -p $out/etc/init.d
-    echo "#!${runtimeShell}" >> $out/etc/init.d/oracle-free-23c
-    echo "$WRAPPER ${oracle-database-base}/etc/init.d/oracle-free-23c \"\$@\"" >> $out/etc/init.d/oracle-free-23c
-    chmod +x $out/etc/init.d/oracle-free-23c
+    makeWrapper $WRAPPER $out/etc/init.d/oracle-free-23c \
+        --set-default ORACLE_HOME ${oracle-database-unwrapped.out}/opt/oracle/product/23c/dbhomeFree \
+        --add-flags ${oracle-database-unwrapped}/etc/init.d/oracle-free-23c
+
+    runHook postInstall
   '';
+
+  meta = {
+    description = "Oracle Database";
+    homepage = "http://www.oracle.com";
+    platforms = lib.platforms.linux;
+    sourceProvenance = with lib.sourceTypes; [ binaryNativeCode ];
+    license = lib.licenses.unfree;
+    maintainers = with lib.maintainers; [ drupol ];
+  };
 }
