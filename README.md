@@ -10,7 +10,45 @@ external contributions.
 ## Usage
 
 The only exposed package of this flake is `oracle-database`, there's also a `default`
-overlay and a NixOS module (wip).
+overlay and a NixOS module.
+
+## NixOS Module
+
+The following modules are exposed:
+
+- `oracle-database` (not working yet)
+- `oracle-database-container` (should work)
+
+To use a module, add this project in your flake `inputs`:
+
+```nix
+nix-oracle-db.url = "github:drupol/nix-oracle-db";
+```
+
+Then, add of of the exposed module in your `configuration.nix`:
+
+```nix
+# The configuration here is an example; it will look slightly different
+# based on your platform (NixOS, nix-darwin) and architecture.
+nixosConfigurations.your-box = nixpkgs.lib.nixosSystem {
+    system = "x86_64-linux"
+
+    modules = [
+        # This is the important part -- add this line to your module list!
+        inputs.nix-oracle-db.nixosModules.oracle-database-container
+    ];
+};
+```
+
+And finally, enable the service:
+
+```nix
+
+services.oracle-database-container = {
+    enable = true;
+    openFirewall = true;
+};
+```
 
 ## Test
 

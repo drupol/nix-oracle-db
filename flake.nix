@@ -36,6 +36,7 @@
 
     flake = {
       nixosModules.oracle-database = import ./modules/oracle-database.nix;
+      nixosModules.oracle-database-container = import ./modules/oracle-database-container.nix;
     };
   };
 }
