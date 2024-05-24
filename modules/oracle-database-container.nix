@@ -57,10 +57,15 @@ in
       "oracle-database-container" = {
         preStart = ''
           mkdir -p ${cfg.dataDir}
-          echo "${cfg.password}" | ${lib.getExe pkgs.podman} secret create oracle_pwd -
         '';
         wantedBy = [ "podman-oracledb.service" ];
         before = [ "podman-oracledb.service" ];
+        serviceConfig = {
+          Type = "oneshot";
+          StateDirectory = "${cfg.dataDir}";
+          RemainAfterExit = true;
+          ExecStart = "echo \"${cfg.password}\" | ${lib.getExe pkgs.podman} secret create oracle_pwd -";
+        };
       };
     };
 
