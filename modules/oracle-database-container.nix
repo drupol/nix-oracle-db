@@ -38,10 +38,9 @@ in
         type = types.path;
       };
 
-      password = lib.mkOption {
-        default = "oracle";
-        description = "The Oracle Database SYS, SYSTEM and PDB_ADMIN password";
-        type = lib.types.str;
+      passwordFile = mkOption {
+        type = types.nullOr types.path;
+        description = "Path to file containing the Oracle Database SYS, SYSTEM and PDB_ADMIN password.";
       };
 
       charset = mkOption {
@@ -64,7 +63,8 @@ in
           Type = "oneshot";
           StateDirectory = "${cfg.dataDir}";
           RemainAfterExit = true;
-          ExecStart = "echo \"${cfg.password}\" | ${lib.getExe pkgs.podman} secret create oracle_pwd -";
+          ExecStart = "echo \"$(cat $CREDENTIALS_DIRECTORY/ORACLE_PWD)\" | ${lib.getExe pkgs.podman} secret create oracle_pwd -";
+          LoadCredential = [ "ORACLE_PWD:${cfg.passwordFile}" ];
         };
       };
     };
