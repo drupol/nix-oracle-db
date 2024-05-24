@@ -64,7 +64,7 @@ in
           StateDirectory = cfg.dataDir;
           RemainAfterExit = false;
           ExecStart = ''
-            ${lib.getExe pkgs.podman} secret create oracle_pwd %d/ORACLE_PWD
+            ${lib.getExe pkgs.podman} secret create oracle_pwd %d/ORACLE_PWD || true
           '';
           LoadCredential = [ "ORACLE_PWD:${cfg.passwordFile}" ];
         };
