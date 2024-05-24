@@ -61,15 +61,19 @@ in
         before = [ "podman-oracledb.service" ];
         serviceConfig = {
           Type = "oneshot";
-          StateDirectory = "${cfg.dataDir}";
-          RemainAfterExit = true;
-          ExecStart = "echo \"$(cat $CREDENTIALS_DIRECTORY/ORACLE_PWD)\" | ${lib.getExe pkgs.podman} secret create oracle_pwd -";
+          StateDirectory = cfg.dataDir;
+          RemainAfterExit = false;
+          ExecStart = ''
+            ${lib.getExe pkgs.podman} secret create oracle_pwd %d/ORACLE_PWD
+          '';
           LoadCredential = [ "ORACLE_PWD:${cfg.passwordFile}" ];
         };
       };
     };
 
     virtualisation = {
+      podman.defaultNetwork.settings.dns_enabled = true;
+
       oci-containers.containers = {
         oracledb = {
           image = "container-registry.oracle.com/database/free:${cfg.version}";
@@ -84,7 +88,10 @@ in
             # EXCLUDE = "user";
           };
           ports = [ "${toString cfg.port}:1521" ];
-          volumes = [ "${cfg.dataDir}:/opt/oracle/oradata" ];
+          volumes = [
+            "${cfg.dataDir}:/opt/oracle/oradata"
+            "/dev/shm:/dev/shm"
+          ];
           extraOptions = [ "--secret=oracle_pwd" ];
         };
       };
