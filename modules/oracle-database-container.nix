@@ -32,10 +32,10 @@ in
         type = types.bool;
       };
 
-      dataDir = mkOption {
-        default = "/var/lib/oracledb";
-        description = "The directory where the Oracle Database will store its data.";
-        type = types.path;
+      volumeName = mkOption {
+        default = "oracledb";
+        description = "The volume where the Oracle Database will store its data.";
+        type = types.str;
       };
 
       passwordFile = mkOption {
@@ -55,7 +55,6 @@ in
     systemd.services = {
       "oracle-database-container" = {
         preStart = ''
-          mkdir -p ${cfg.dataDir}
           ${lib.getExe pkgs.podman} secret rm --ignore oracle_pwd
         '';
         wantedBy = [ "podman-oracledb.service" ];
@@ -89,8 +88,7 @@ in
           };
           ports = [ "${toString cfg.port}:1521" ];
           volumes = [
-            "${cfg.dataDir}:/opt/oracle/oradata"
-            "/dev/shm:/dev/shm"
+            "${cfg.volumeName}:/opt/oracle/oradata"
           ];
           extraOptions = [ "--secret=oracle_pwd" ];
         };
