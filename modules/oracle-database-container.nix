@@ -64,9 +64,9 @@ in
           Type = "oneshot";
           RemainAfterExit = true;
           ExecStart = ''
-            ${lib.getExe pkgs.podman} secret create oracle_pwd %d/ORACLE_PWD
+            ${lib.getExe pkgs.podman} secret create oracle_pwd %d/oracle_pwd
           '';
-          LoadCredential = [ "ORACLE_PWD:${cfg.passwordFile}" ];
+          LoadCredential = [ "oracle_pwd:${cfg.passwordFile}" ];
         };
       };
     };
