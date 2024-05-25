@@ -56,6 +56,7 @@ in
       "oracle-database-container" = {
         preStart = ''
           mkdir -p ${cfg.dataDir}
+          ${lib.getExe pkgs.podman} secret rm --ignore oracle_pwd
         '';
         wantedBy = [ "podman-oracledb.service" ];
         before = [ "podman-oracledb.service" ];
@@ -63,7 +64,6 @@ in
           Type = "oneshot";
           RemainAfterExit = true;
           ExecStart = ''
-            ${lib.getExe pkgs.podman} secret rm --ignore oracle_pwd
             ${lib.getExe pkgs.podman} secret create oracle_pwd %d/ORACLE_PWD
           '';
           LoadCredential = [ "ORACLE_PWD:${cfg.passwordFile}" ];
