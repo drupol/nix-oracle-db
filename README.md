@@ -69,6 +69,16 @@ More info on this at:
 - https://github.com/oracle/docker-images/issues/640
 - https://github.com/OxalisCommunity/oxalis/issues/440
 
+I tested a successful workaround by copying the files from the container to the
+host before running the container, but I'm not yet satisfied:
+
+```bash
+    ${lib.getExe pkgs.podman} rm --force --ignore oracledbtmp
+    ${lib.getExe pkgs.podman} create --name oracledbtmp container-registry.oracle.com/database/free:${cfg.version}
+    ${lib.getExe pkgs.podman} cp oracledbtmp:/opt/oracle/oradata ${cfg.volumeName}/
+    chmod -R 777 ${cfg.volumeName}/oradata
+```
+
 ## Test
 
 Use `nix build .#oracle-database-test -L`
