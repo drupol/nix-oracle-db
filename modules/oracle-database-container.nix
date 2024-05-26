@@ -34,8 +34,20 @@ in
 
       volumeName = mkOption {
         default = "oracledb";
-        description = "The volume where the Oracle Database will store its data.";
-        type = types.str;
+        description = ''
+          The volume where the Oracle Database will store its data.
+          Set an existing directory to persist the data between container
+          restarts, but be aware that Oracle requires a specific directory
+          structure with specific files. If you want to persist the data,
+          the best option is to use a Docker volume at the moment. Leave empty
+          to use a stateless container.
+
+          More info on this at:
+            - https://github.com/oracle/docker-images/issues/1533
+            - https://github.com/oracle/docker-images/issues/640
+            - https://github.com/OxalisCommunity/oxalis/issues/440
+        '';
+        type = types.nullOr types.str;
       };
 
       passwordFile = mkOption {
@@ -87,7 +99,7 @@ in
             # EXCLUDE = "user";
           };
           ports = [ "${toString cfg.port}:1521" ];
-          volumes = [
+          volumes = [ ] + lib.optionals (null != cfg.volumeName) [
             "${cfg.volumeName}:/opt/oracle/oradata"
           ];
           extraOptions = [ "--secret=oracle_pwd" ];

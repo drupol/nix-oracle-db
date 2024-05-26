@@ -17,7 +17,7 @@ overlay and a NixOS module.
 The following modules are exposed:
 
 - `oracle-database` (not working yet)
-- `oracle-database-container` (should work)
+- `oracle-database-container`
 
 To use a module, add this project in your flake `inputs`:
 
@@ -47,8 +47,27 @@ And finally, enable the service:
 services.oracle-database-container = {
     enable = true;
     openFirewall = true;
+    volumeName = "oracledb";
 };
 ```
+
+The current implementation uses Podman. Switching between Docker and Podman will
+be possible in the future.
+
+## Limitations
+
+The Oracle Database container cannot expose the database files to a local
+directory. This issue arises because the user-mounted volume is empty, while
+Oracle expects a very specific file and directory structure within it. To
+resolve this, we would need to copy the necessary files from the container to
+the host, and then run the container with the mounted volume. Unfortunately, I
+have not yet found an elegant solution to this problem.
+
+More info on this at:
+
+- https://github.com/oracle/docker-images/issues/1533
+- https://github.com/oracle/docker-images/issues/640
+- https://github.com/OxalisCommunity/oxalis/issues/440
 
 ## Test
 
