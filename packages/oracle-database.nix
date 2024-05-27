@@ -1,19 +1,20 @@
-{ lib
-, stdenvNoCC
-, fetchurl
-, buildFHSEnv
-, writeScript
-, rpmextract
-, libaio
-, alsa-lib
-, makeBinaryWrapper
-, openssl
-, iproute2
-, su
-, gawk
-, gnugrep
-, hostname
-, coreutils
+{
+  lib,
+  stdenvNoCC,
+  fetchurl,
+  buildFHSEnv,
+  writeScript,
+  rpmextract,
+  libaio,
+  alsa-lib,
+  makeBinaryWrapper,
+  openssl,
+  iproute2,
+  su,
+  gawk,
+  gnugrep,
+  hostname,
+  coreutils,
 }:
 let
   oracle-database-unwrapped = stdenvNoCC.mkDerivation (finalAttrs: {
@@ -25,9 +26,7 @@ let
       hash = "sha256-Exm818twbLcnUBy9mKvz85gKT9q+thOhq//HVpJcc3Q=";
     };
 
-    nativeBuildInputs = [
-      rpmextract
-    ];
+    nativeBuildInputs = [ rpmextract ];
 
     unpackCmd = ''
       mkdir ${finalAttrs.pname}-${finalAttrs.version} && pushd ${finalAttrs.pname}-${finalAttrs.version}
@@ -99,9 +98,7 @@ stdenvNoCC.mkDerivation {
   dontBuild = true;
   dontConfigure = true;
 
-  nativeBuildInputs = [
-    makeBinaryWrapper
-  ];
+  nativeBuildInputs = [ makeBinaryWrapper ];
 
   installPhase = ''
     runHook preInstall

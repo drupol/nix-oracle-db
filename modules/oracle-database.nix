@@ -1,7 +1,8 @@
-{ config
-, lib
-, pkgs
-, ...
+{
+  config,
+  lib,
+  pkgs,
+  ...
 }:
 let
   cfg = config.services.oracle-database;
@@ -52,7 +53,7 @@ in
         DynamicUser = true;
         PrivateTmp = "yes";
         Restart = "on-failure";
-        Environment = [];
+        Environment = [ ];
       };
     };
   };
