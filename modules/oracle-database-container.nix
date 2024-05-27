@@ -99,9 +99,7 @@ in
             # EXCLUDE = "user";
           };
           ports = [ "${toString cfg.port}:1521" ];
-          volumes = [ ] + lib.optionals (null != cfg.volumeName) [
-            "${cfg.volumeName}:/opt/oracle/oradata"
-          ];
+          volumes = [ ] ++ lib.optionals (null != cfg.volumeName) [ "${cfg.volumeName}:/opt/oracle/oradata" ];
           extraOptions = [ "--secret=oracle_pwd" ];
         };
       };
