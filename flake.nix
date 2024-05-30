@@ -31,6 +31,7 @@
 
           formatter = pkgs.nixfmt-rfc-style;
 
+          packages.oracle-oci = pkgs.callPackage ./packages/oracle-oci.nix { };
           packages.oracle-database = pkgs.callPackage ./packages/oracle-database.nix { };
           packages.oracle-database-test = pkgs.testers.runNixOSTest ./tests/integration/oracle-database.nix;
           packages.oracle-database-container-test = pkgs.testers.runNixOSTest ./tests/integration/oracle-database-container.nix;
